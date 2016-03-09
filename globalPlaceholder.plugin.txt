@@ -1,0 +1,25 @@
+$e = &$modx->Event;
+$docid = &$modx->documentIdentifier;
+global $globalPlaceholders;
+if ($e->name == 'OnParseDocument') {
+        if(!$globalPlaceholders) {
+                $globalPlaceholders = true;
+                $settings = $modx->config;
+                foreach($settings as $key=>$value) {
+                        if(stristr($key, 'global_')) {
+                                unset($modx->config[$key]);
+                                $newkey = str_replace("global_", "", $key);
+                                $val = json_decode($value,true);
+                                $modx->config[$newkey] = $val['value'];
+                                $newval = is_array($val['value']) ? json_encode($val['value']) : $val['value'];
+                                if($val['globalTV'] === true || $val['globalTV'] == "1") {
+                                        $modx->documentObject[$newkey][0] = $newkey;
+                                        $modx->documentObject[$newkey][1] = $newval;
+                                }
+                                if($val['globalPH'] === true || $val['globalPH'] == "1") {
+                                        $modx->setPlaceholder($newkey,$newval);
+                                }
+                        }
+                }
+        }
+}

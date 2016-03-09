@@ -1,0 +1,1 @@
+<input onchange="documentDirty=true;" type="text" name="global_[+view.settingName+]" value="[+view.value+]">

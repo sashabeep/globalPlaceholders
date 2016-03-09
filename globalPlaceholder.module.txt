@@ -1,0 +1,239 @@
+$modulename = "globalplaceholders";
+$globalPHPath = MODX_BASE_PATH.'assets/modules/'.$modulename.'/';
+$moduleurl = 'index.php?a=112&id='.$_GET['id'].'&';
+include_once($globalPHPath."includes/class.renderer.inc.php");
+$render = new Render($modx,$modulename);
+$render->templatesDir = $globalPHPath."templates";
+$render->setPlaceholders(Array('moduleurl' => $moduleurl, 'modulename' => $modulename, 'modulepath' => $globalPHPath, 'theme' => $modx->config['manager_theme'], 'modx_manager_url' => MODX_MANAGER_URL, 'pluginid' => $_REQUEST['id']));
+
+$output = "";
+$table = $modx->getFullTableName("system_settings");
+
+switch ($_REQUEST['h']) {
+	default:
+	
+		function renderSettingElement ($values) {
+			if($values['type'] == "text" || $values['type'] == "textarea") {
+				$values['value'] = is_array($values['value']) ? json_encode($values['value'], JSON_UNESCAPED_UNICODE) : $values['value'];
+			}
+			if($values['type'] == "checkbox") {
+				if($values['value'] == "1") {
+					$values['checked'] = "checked";
+				} else {
+					$values['checked'] = "";
+				}
+			}
+			if($values['type'] == "select") {
+				$selectValues = "";
+				$svals = explode("||",$values['values']);
+				foreach($svals as $kk=>$vv) {
+					$svalspair = explode("==",$vv);
+					$kkey = sizeof($svalspair) > 1 ? $svalspair[0] : $vv;
+					$vval = sizeof($svalspair) > 1 ? $svalspair[1] : $vv;
+					$selected = $values['value'] == $kkey ? "selected" : "";
+					$selectValues .= "<option value=".$kkey." ".$selected.">".$vval."</option>";
+				}
+				$values['selectValues'] = $selectValues;
+			}
+			return $values;
+		}
+	
+		$settings = $modx->config;
+		$globalSettings = Array();
+		$groups = Array();
+		$groupsSettings = Array();
+		$outGroups = "";
+		$outSettings = "";
+
+		foreach($settings as $key=>$value) {
+			if(stristr($key, 'global_')) {
+				$jsonval = json_decode($value,true);
+				$jsonval['settingName'] = str_replace("global_", "", $key);
+				$groups[$jsonval['group']] = Array("group"=>$jsonval['group'],"groupName"=>$jsonval['groupName']);
+				$globalSettings[$key] = $jsonval;
+				$groupsSettings[$jsonval['group']][$key] = $jsonval;
+			}
+		}
+		if(sizeof($globalSettings) == 0) {
+			$output = $render->render("mainpage",$render->ph);
+		} else {
+			foreach ($groups as $key=>$value) {
+				$groupsItems = "";
+				$settingsItems = "";
+				foreach($groupsSettings[$value['group']] as $k=>$v) {
+					$newValues = renderSettingElement($v);
+					$render->setPlaceholders($newValues,"view.");
+					$settingsElement = $render->render("settingsElement".$v['type'],$render->ph);
+					$render->setPlaceholder("view.settingInput",$settingsElement);
+					$groupsItems .= $render->render("mainTabItemItem",$render->ph);
+					$settingsItems .= $render->render("mainTabSettingItem",$render->ph);
+				}
+				$outGroups .= $render->render("mainTabItemParent",Array('view.group'=>$value['group'],'view.groupName'=>$value['groupName'], 'view.groupItems'=>$groupsItems ));
+				$outSettings .= $render->render("mainTabSettingsParent",Array('view.group'=>$value['group'],'view.groupName'=>$value['groupName'], 'view.groupItems'=>$settingsItems ));
+			}
+			$tab = (is_numeric($_GET['tab'])) ? '<script type="text/javascript"> Us.setSelectedIndex( '.$_GET['tab'].' );</script>' : '';
+			$render->setPlaceholders(Array('tab' => $tab, 'tabGroups' => $outGroups, 'tabSettings' => $outSettings ));
+			$output = $render->render("mainpage",$render->ph);
+			$output = $modx->mergeSettingsContent($output);
+		}
+	break;
+	case "add":
+		$settings = $modx->config;
+		$groups = Array();
+		$groupOut = "";
+		foreach($settings as $key=>$value) {
+			if(stristr($key, 'global_')) {
+				$jsonval = json_decode($value,true);
+				if(!$groups[$jsonval['group']]) {
+					$groupOut .= "<option value='".$jsonval['group']."'>".$jsonval['groupName']."</option>";
+					$groups[$jsonval['group']] = Array("group"=>$jsonval['group'],"groupName"=>$jsonval['groupName']);
+				}
+			}
+		}
+		$render->setPlaceholder("view.groups",$groupOut);
+		$output = $render->render("addpage",$render->ph);
+		$output = $modx->mergeSettingsContent($output);
+	break;
+	case "edit":
+		$settings = $modx->config;
+		$settingName = $_REQUEST['settingid'];
+		$data = json_decode($modx->getConfig($settingName),true);
+		$groupOut = "";
+		$groups = Array();
+		foreach($settings as $key=>$value) {
+			if(stristr($key, 'global_')) {
+				$jsonval = json_decode($value,true);
+				if(!$groups[$jsonval['group']]) {
+					$selected = $data['group'] == $jsonval['group'] ? "selected" : "";
+					$groupOut .= "<option value='".$jsonval['group']."' ".$selected.">".$jsonval['groupName']."</option>";
+					$groups[$jsonval['group']] = Array("group"=>$jsonval['group'],"groupName"=>$jsonval['groupName']);
+				}
+			}
+		}
+		$data['groups'] = $groupOut;
+		$data['setting_name'] = str_replace("global_", "", $settingName);
+		$data['selected'.$data['type']] = "selected";
+		if($data['globalTV'] === true || $data['globalTV'] == "1") { $data['globalTVchecked'] = "checked"; } 
+		if($data['globalPH'] === true || $data['globalPH'] == "1") { $data['globalPHchecked'] = "checked"; } 
+		$render->setPlaceholders($data,"view.");
+		$output = $render->render("editpage",$render->ph);
+		$output = $modx->mergeSettingsContent($output);
+	break;
+	case "save":
+		$settings = $modx->config;
+		$old = json_decode($modx->getConfig($_POST['setting_oldname']),true);
+		$new = array();
+		$groups = Array();
+		foreach($settings as $key=>$value) {
+			if(stristr($key, 'global_')) {
+				$jsonval = json_decode($value,true);
+				if(!$groups[$jsonval['group']]) {
+					$groups[$jsonval['group']] = Array("group"=>$jsonval['group'],"groupName"=>$jsonval['groupName']);
+				}
+			}
+		}
+		if(!isset($_POST['globalTV'])) { $_POST['globalTV'] = 0; }
+		if(!isset($_POST['globalPH'])) { $_POST['globalPH'] = 0; }
+		if(!isset($_POST['setting_oldname'])) {
+			$duplicate = json_decode($modx->getConfig("global_".$_POST['setting_name']),true);
+			if(is_array($duplicate)) {
+				$_POST['setting_name'] = "duplicate_".$_POST['setting_name'];
+			}
+			$new['setting_name'] = "global_".$_POST['setting_name'];
+			$new['setting_value'] = array(
+				"type"=>$_POST['type'],
+				"values"=>$_POST['values'],
+				"globalTV"=>$_POST['globalTV'],
+				"globalPH"=>$_POST['globalTV'],
+				"settingDescription"=>$_POST['settingDescription']
+			);
+			if(!empty($_POST['newgroup'])) {
+				$new['setting_value']['group'] = $render->translateString($_POST['newgroup']);
+				$new['setting_value']['groupName'] = $_POST['newgroup'];
+			} else {
+				$new['setting_value']['group'] = $groups[$_POST['group']]['group'];
+				$new['setting_value']['groupName'] = $groups[$_POST['group']]['groupName'];
+			}
+			$new['setting_value'] = json_encode($new['setting_value'], JSON_UNESCAPED_UNICODE);
+			print_r($new);
+			$result = $modx->db->insert($new,$table);
+			$modx->clearCache('full');
+			sleep(3);
+			header('Location: '.$moduleurl);
+		} else {
+			$duplicate = json_decode($modx->getConfig("global_".$_POST['setting_name']),true);
+			if(is_array($duplicate) && $_POST['setting_oldname'] != "global_".$_POST['setting_name']) {
+				$_POST['setting_name'] = "duplicate_".$_POST['setting_name'];
+			}
+			foreach ($old as $key=>$value) {
+				if($_POST[$key] !== $value && isset($_POST[$key]) && $_POST[$key] != "") {
+					$old[$key] = $_POST[$key];
+				}
+			}
+			if(!empty($_POST['newgroup'])) {
+				$old['group'] = $render->translateString($_POST['newgroup']);
+				$old['groupName'] = $_POST['newgroup'];
+			} else {
+				$old['group'] = $groups[$_POST['group']]['group'];
+				$old['groupName'] = $groups[$_POST['group']]['groupName'];
+			}
+			$old['globalTV'] = $_POST['globalTV'];
+			$old['globalPH'] = $_POST['globalPH'];
+			$old = json_encode($old, JSON_UNESCAPED_UNICODE);
+			$updata = array();
+			$updata['setting_value'] = $old;
+			$result = $modx->db->update($updata, $table, $table.".`setting_name` = '".$_POST['setting_oldname']."'");
+			if($_POST['setting_oldname'] != "global_".$_POST['setting_name']) {
+				$updata = array();
+				$updata['setting_name'] = "global_".$_POST['setting_name'];
+				$modx->db->query("UPDATE  ".$table." SET  `setting_name` =  'global_".$_POST['setting_name']."' WHERE  ".$table.".`setting_name` =  '".$_POST['setting_oldname']."'");
+			}
+			if($result) {
+				$modx->clearCache('full');
+				sleep(3);
+				header('Location: '.$moduleurl);
+			} else {
+				echo "shit";
+			}
+		}
+	break;
+	case "delete":
+		$settingName = $_REQUEST['settingid'];
+		$old = json_decode($modx->getConfig($settingName),true);
+		print_r($old);
+		echo $settingName;
+		$result = $modx->db->delete($table, "`setting_name` = '".$settingName."'");
+		if($result) {
+			$modx->clearCache('full');
+			sleep(3);
+			header('Location: '.$moduleurl);
+		}
+	break;
+	case "saveSettings":
+		$settings = $modx->config;
+		foreach($settings as $key=>$value) {
+			if(stristr($key, 'global_')) {
+				$jsonval = json_decode($value,true);
+				$origval = is_array($jsonval['value']) ? json_encode($jsonval['value'], JSON_UNESCAPED_UNICODE) : $jsonval['value'];
+				if(!isset($_POST[$key])) { $_POST[$key] = 0; }
+				if($origval != $_POST[$key]) {
+					$jsonval['value'] = json_decode($_POST[$key],true);
+					$jsonval['value'] = is_array($jsonval['value']) ? $jsonval['value'] : $_POST[$key];
+					$value = json_encode($jsonval, JSON_UNESCAPED_UNICODE);
+					$result = $modx->db->update(Array("setting_value"=>$value), $table, $table.".`setting_name` = '".$key."'");
+					$modx->config[$key] = $value;
+					if($result) {
+						echo $key." updated <br>";
+					}
+				}
+			}
+		}
+	
+		$modx->clearCache('full');
+		sleep(3);
+		header('Location: '.$moduleurl);
+	break;
+}
+$render->setPlaceholder("view.content",$output);
+$output = $render->render("main",$render->ph);
+echo $output;
