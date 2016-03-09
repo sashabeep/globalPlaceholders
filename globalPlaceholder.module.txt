@@ -12,7 +12,7 @@ $render->setPlaceholders(Array('moduleurl' => $moduleurl, 'modulename' => $modul
 
 function renderSettingElement ($values) {
 	if($values['type'] == "text" || $values['type'] == "textarea") {
-		$values['value'] = is_array($values['value']) ? json_encode($values['value'], JSON_UNESCAPED_UNICODE) : $values['value'];
+		$values['value'] = is_array($values['value']) ? json_encode_wrapper($values['value']) : $values['value'];
 	}
 	if($values['type'] == "checkbox") {
 		if($values['value'] == "1") {
@@ -34,6 +34,15 @@ function renderSettingElement ($values) {
 		$values['selectValues'] = $selectValues;
 	}
 	return $values;
+}
+
+function json_encode_wrapper ($array) {
+	if(!is_array($array)) { return $array; }
+	if (version_compare(phpversion(), '5.4.0', '<')) {
+		return preg_replace_callback('/\\\u([0-9а-яА-Яa-fA-F]{4})/',create_function('$match', 'return mb_convert_encoding("&#" . intval($match[1], 16) . ";", "UTF-8", "HTML-ENTITIES");'),json_encode($array));
+	} else {
+		return json_encode($array, JSON_UNESCAPED_UNICODE);
+	}
 }
 
 switch ($_REQUEST['h']) {
@@ -121,6 +130,7 @@ switch ($_REQUEST['h']) {
 		$output = $modx->mergeSettingsContent($output);
 	break;
 	case "save":
+		if(empty($_POST['setting_name'])) { header('Location: '.$_SERVER['HTTP_REFERER']); break; }
 		$settings = $modx->config;
 		$old = json_decode($modx->getConfig($_POST['setting_oldname']),true);
 		$new = array();
@@ -133,8 +143,10 @@ switch ($_REQUEST['h']) {
 				}
 			}
 		}
+		if($_POST['newgroup'] == "" && ($_POST['group'] == "no_category" || !isset($_POST['group']) )) { $_POST['newgroup'] = $render->lang['no_category']; }
 		if(!isset($_POST['globalTV'])) { $_POST['globalTV'] = 0; }
 		if(!isset($_POST['globalPH'])) { $_POST['globalPH'] = 0; }
+		if(!empty($_POST['setting_name'])) { $_POST['setting_name'] = $render->translateString($_POST['setting_name']); }
 		if(!isset($_POST['setting_oldname'])) {
 			$duplicate = json_decode($modx->getConfig("global_".$_POST['setting_name']),true);
 			if(is_array($duplicate)) {
@@ -155,7 +167,7 @@ switch ($_REQUEST['h']) {
 				$new['setting_value']['group'] = $groups[$_POST['group']]['group'];
 				$new['setting_value']['groupName'] = $groups[$_POST['group']]['groupName'];
 			}
-			$new['setting_value'] = json_encode($new['setting_value'], JSON_UNESCAPED_UNICODE);
+			$new['setting_value'] = json_encode_wrapper($new['setting_value']);
 			print_r($new);
 			$result = $modx->db->insert($new,$table);
 			$modx->clearCache('full');
@@ -180,7 +192,7 @@ switch ($_REQUEST['h']) {
 			}
 			$old['globalTV'] = $_POST['globalTV'];
 			$old['globalPH'] = $_POST['globalPH'];
-			$old = json_encode($old, JSON_UNESCAPED_UNICODE);
+			$old = json_encode_wrapper($old);
 			$updata = array();
 			$updata['setting_value'] = $old;
 			$result = $modx->db->update($updata, $table, $table.".`setting_name` = '".$_POST['setting_oldname']."'");
@@ -215,12 +227,12 @@ switch ($_REQUEST['h']) {
 		foreach($settings as $key=>$value) {
 			if(stristr($key, 'global_')) {
 				$jsonval = json_decode($value,true);
-				$origval = is_array($jsonval['value']) ? json_encode($jsonval['value'], JSON_UNESCAPED_UNICODE) : $jsonval['value'];
+				$origval = is_array($jsonval['value']) ? json_encode_wrapper($jsonval['value']) : $jsonval['value'];
 				if(!isset($_POST[$key])) { $_POST[$key] = 0; }
 				if($origval != $_POST[$key]) {
 					$jsonval['value'] = json_decode($_POST[$key],true);
 					$jsonval['value'] = is_array($jsonval['value']) ? $jsonval['value'] : $_POST[$key];
-					$value = json_encode($jsonval, JSON_UNESCAPED_UNICODE);
+					$value = json_encode_wrapper($jsonval);
 					$result = $modx->db->update(Array("setting_value"=>$value), $table, $table.".`setting_name` = '".$key."'");
 					$modx->config[$key] = $value;
 					if($result) {
