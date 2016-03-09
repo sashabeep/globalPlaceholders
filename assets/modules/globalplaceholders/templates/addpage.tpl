@@ -15,17 +15,17 @@
 		<div class="sectionBody">
 			<div class="row" style="margin-bottom: 15px;">
                 <div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
-                    <span class="warning">Имя поля</span><br><span class="comment">Описание первого тестового параметра</span>
+                    <span class="warning">Имя поля</span><br><span class="comment">имя поля по которому он будет дступен</span>
                 </div>
                 <div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
                     <label class="input">
-                        <input type="text" name="setting_name" onchange="documentDirty=true;" value="[+view.name+]" />
+                        <input type="text" required name="setting_name" onchange="documentDirty=true;" value="[+view.name+]" />
                     </label>
                 </div>
             </div>
             <div class="row" style="margin-bottom: 15px;">
                 <div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
-                    <span class="warning">Описание поля</span><br><span class="comment">Описание первого тестового параметра</span>
+                    <span class="warning">Описание поля</span><br><span class="comment">описание поля</span>
                 </div>
                 <div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
                     <label class="input">
@@ -35,7 +35,7 @@
             </div>
             <div class="row" style="margin-bottom: 15px;">
                 <div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
-                    <span class="warning">Тип поля</span><br><span class="comment">Описание первого тестового параметра</span>
+                    <span class="warning">Тип поля</span><br><span class="comment">визуальный компонент поля</span>
                 </div>
                 <div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
                     <label class="select">
@@ -53,7 +53,7 @@
             </div>
             <div class="row" style="margin-bottom: 15px;">
                 <div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
-                    <span class="warning">Возможные значения</span><br><span class="comment">Описание первого тестового параметра</span>
+                    <span class="warning">Возможные значения</span><br><span class="comment">возможные значения для селекта и чекбоксов</span>
                 </div>
                 <div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
                     <label class="textarea">
@@ -63,7 +63,7 @@
             </div>
             <div class="row" style="margin-bottom: 15px;">
                 <div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
-                    <span class="warning">Перезаписывать TV</span><br><span class="comment">Описание первого тестового параметра</span>
+                    <span class="warning">Перезаписывать TV</span><br><span class="comment">Если да то значение будет доступно в [**]</span>
                 </div>
                 <div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
                     <label class="checkbox">
@@ -74,7 +74,7 @@
             </div>
             <div class="row" style="margin-bottom: 15px;">
                 <div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
-                    <span class="warning">Перезаписывать PH</span><br><span class="comment">Описание первого тестового параметра</span>
+                    <span class="warning">Перезаписывать PH</span><br><span class="comment">Если да то значение будет доступно в <span>[</span>++]</span>
                 </div>
                 <div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
                     <label class="checkbox">
@@ -85,12 +85,12 @@
             </div>
             <div class="row" style="margin-bottom: 15px;">
                 <div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
-                    <span class="warning">Существующие категории</span><br><span class="comment">Описание первого тестового параметра</span>
+                    <span class="warning">Существующие категории</span><br><span class="comment">выберите существующую категорию</span>
                 </div>
                 <div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
                     <label class="select">
                         <select name="group" onchange="documentDirty=true;">
-                            <option selected disabled value="Unmarked"></option>
+                            <option selected disabled value="no_category">[+lang.no_category+]</option>
                             [+view.groups+]
                         </select>
                         <i></i>
@@ -99,7 +99,7 @@
             </div>
             <div class="row" style="margin-bottom: 15px;">
                 <div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
-                    <span class="warning">Новая категория</span><br><span class="comment">Описание первого тестового параметра</span>
+                    <span class="warning">Новая категория</span><br><span class="comment">имя новой категории</span>
                 </div>
                 <div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
                     <label class="input">
