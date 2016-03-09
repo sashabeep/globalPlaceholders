@@ -1,3 +1,6 @@
+$output = "";
+$table = $modx->getFullTableName("system_settings");
+$userrole = $modx->getUserInfo($modx->getLoginUserID())['role'];
 $modulename = "globalplaceholders";
 $globalPHPath = MODX_BASE_PATH.'assets/modules/'.$modulename.'/';
 $moduleurl = 'index.php?a=112&id='.$_GET['id'].'&';
@@ -6,38 +9,35 @@ $render = new Render($modx,$modulename);
 $render->templatesDir = $globalPHPath."templates";
 $render->setPlaceholders(Array('moduleurl' => $moduleurl, 'modulename' => $modulename, 'modulepath' => $globalPHPath, 'theme' => $modx->config['manager_theme'], 'modx_manager_url' => MODX_MANAGER_URL, 'pluginid' => $_REQUEST['id']));
 
-$output = "";
-$table = $modx->getFullTableName("system_settings");
+
+function renderSettingElement ($values) {
+	if($values['type'] == "text" || $values['type'] == "textarea") {
+		$values['value'] = is_array($values['value']) ? json_encode($values['value'], JSON_UNESCAPED_UNICODE) : $values['value'];
+	}
+	if($values['type'] == "checkbox") {
+		if($values['value'] == "1") {
+			$values['checked'] = "checked";
+		} else {
+			$values['checked'] = "";
+		}
+	}
+	if($values['type'] == "select") {
+		$selectValues = "";
+		$svals = explode("||",$values['values']);
+		foreach($svals as $kk=>$vv) {
+			$svalspair = explode("==",$vv);
+			$kkey = sizeof($svalspair) > 1 ? $svalspair[0] : $vv;
+			$vval = sizeof($svalspair) > 1 ? $svalspair[1] : $vv;
+			$selected = $values['value'] == $kkey ? "selected" : "";
+			$selectValues .= "<option value=".$kkey." ".$selected.">".$vval."</option>";
+		}
+		$values['selectValues'] = $selectValues;
+	}
+	return $values;
+}
 
 switch ($_REQUEST['h']) {
 	default:
-	
-		function renderSettingElement ($values) {
-			if($values['type'] == "text" || $values['type'] == "textarea") {
-				$values['value'] = is_array($values['value']) ? json_encode($values['value'], JSON_UNESCAPED_UNICODE) : $values['value'];
-			}
-			if($values['type'] == "checkbox") {
-				if($values['value'] == "1") {
-					$values['checked'] = "checked";
-				} else {
-					$values['checked'] = "";
-				}
-			}
-			if($values['type'] == "select") {
-				$selectValues = "";
-				$svals = explode("||",$values['values']);
-				foreach($svals as $kk=>$vv) {
-					$svalspair = explode("==",$vv);
-					$kkey = sizeof($svalspair) > 1 ? $svalspair[0] : $vv;
-					$vval = sizeof($svalspair) > 1 ? $svalspair[1] : $vv;
-					$selected = $values['value'] == $kkey ? "selected" : "";
-					$selectValues .= "<option value=".$kkey." ".$selected.">".$vval."</option>";
-				}
-				$values['selectValues'] = $selectValues;
-			}
-			return $values;
-		}
-	
 		$settings = $modx->config;
 		$globalSettings = Array();
 		$groups = Array();
@@ -73,7 +73,8 @@ switch ($_REQUEST['h']) {
 			}
 			$tab = (is_numeric($_GET['tab'])) ? '<script type="text/javascript"> Us.setSelectedIndex( '.$_GET['tab'].' );</script>' : '';
 			$render->setPlaceholders(Array('tab' => $tab, 'tabGroups' => $outGroups, 'tabSettings' => $outSettings ));
-			$output = $render->render("mainpage",$render->ph);
+			$templatename = $userrole == 1 ? "mainpage" : "mainpageUser";
+			$output = $render->render($templatename,$render->ph);
 			$output = $modx->mergeSettingsContent($output);
 		}
 	break;
