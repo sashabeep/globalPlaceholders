@@ -42,6 +42,7 @@
                         <select name="type" onchange="documentDirty=true;">
                             <option value="text">Text</option>
                             <option value="textarea">Textarea</option>
+                            <option value="richtext">Richtext</option>
                             <option value="checkbox">Checkbox</option>
                             <option value="select">Select</option>
                             <option value="image">Image</option>

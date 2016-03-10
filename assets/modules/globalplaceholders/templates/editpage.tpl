@@ -44,6 +44,7 @@
                         <select name="type" onchange="documentDirty=true;">
                             <option value="text" [+view.selectedtext+]>Text</option>
                             <option value="textarea" [+view.selectedtextarea+]>Textarea</option>
+                            <option value="richtext" [+view.selectedrichtext+]>Richtext</option>
                             <option value="checkbox" [+view.selectedcheckbox+]>Checkbox</option>
                             <option value="select" [+view.selectedselect+]>Select</option>
                             <option value="image" [+view.selectedimage+]>Image</option>
