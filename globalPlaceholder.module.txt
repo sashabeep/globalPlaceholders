@@ -1,4 +1,6 @@
-$output = "";
+$outputTabs = $outputTabs ? $outputTabs : false;
+$outputTabs = $outputTabs == "true" ? true : false;
+$output = "";		
 $table = $modx->getFullTableName("system_settings");
 $userrole = $modx->getUserInfo($modx->getLoginUserID())['role'];
 $modulename = "globalplaceholders";
@@ -68,6 +70,8 @@ switch ($_REQUEST['h']) {
 		if(sizeof($globalSettings) == 0) {
 			$output = $render->render("mainpage",$render->ph);
 		} else {
+			$outSettingsTemplate = $outputTabs === true ? "mainTabTabSettingsParent" : "mainTabSettingsParent";
+			$settingsItemsTemplate = $outputTabs === true ? "mainTabTabSettingItem" : "mainTabSettingItem";
 			foreach ($groups as $key=>$value) {
 				$groupsItems = "";
 				$settingsItems = "";
@@ -81,10 +85,10 @@ switch ($_REQUEST['h']) {
 					$settingsElement = $render->render("settingsElement".$v['type'],$render->ph);
 					$render->setPlaceholder("view.settingInput",$settingsElement);
 					$groupsItems .= $render->render("mainTabItemItem",$render->ph);
-					$settingsItems .= $render->render("mainTabSettingItem",$render->ph);
+					$settingsItems .= $render->render($settingsItemsTemplate,$render->ph);
 				}
 				$outGroups .= $render->render("mainTabItemParent",Array('view.group'=>$value['group'],'view.groupName'=>$value['groupName'], 'view.groupItems'=>$groupsItems ));
-				$outSettings .= $render->render("mainTabSettingsParent",Array('view.group'=>$value['group'],'view.groupName'=>$value['groupName'], 'view.groupItems'=>$settingsItems ));
+				$outSettings .= $render->render($outSettingsTemplate,Array('view.group'=>$value['group'],'view.groupName'=>$value['groupName'], 'view.groupItems'=>$settingsItems ));
 			}
 			
 			if (is_array($replace_richtexteditor) && sizeof($replace_richtexteditor) > 0) {
@@ -101,6 +105,9 @@ switch ($_REQUEST['h']) {
 			$tab = (is_numeric($_GET['tab'])) ? '<script type="text/javascript"> Us.setSelectedIndex( '.$_GET['tab'].' );</script>' : '';
 			$render->setPlaceholders(Array('tab' => $tab, 'tabGroups' => $outGroups, 'tabSettings' => $outSettings ));
 			$templatename = $userrole == 1 ? "mainpage" : "mainpageUser";
+			if($outputTabs == true) {
+				$templatename .= "Tabs";
+			}
 			$output = $render->render($templatename,$render->ph);
 			$output = $modx->mergeSettingsContent($output);
 		}
@@ -202,6 +209,7 @@ switch ($_REQUEST['h']) {
 			if(!isset($old['values'])) {
 				$old['values'] = $_POST['values'];
 			}
+			$old['value'] = addslashes(stripslashes($old['value']));
 			foreach ($old as $key=>$value) {
 				if($_POST[$key] !== $value && isset($_POST[$key]) && $_POST[$key] != "") {
 					$old[$key] = $_POST[$key];
