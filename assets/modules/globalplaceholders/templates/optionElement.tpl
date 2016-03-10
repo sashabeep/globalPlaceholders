@@ -1,0 +1,1 @@
+<option value="[+view.optionValue+]" [+view.optionSelected+]>[+view.optionName+]</option>
