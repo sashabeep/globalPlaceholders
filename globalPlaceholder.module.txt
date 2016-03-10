@@ -55,7 +55,6 @@ switch ($_REQUEST['h']) {
 		$outGroups = "";
 		$outSettings = "";
 		$replace_richtexteditor = array();
-
 		foreach($settings as $key=>$value) {
 			if(stristr($key, 'global_')) {
 				$jsonval = json_decode($value,true);
@@ -73,10 +72,13 @@ switch ($_REQUEST['h']) {
 				$groupsItems = "";
 				$settingsItems = "";
 				foreach($groupsSettings[$value['group']] as $k=>$v) {
+					if($v['type'] == "richtext") { 
+						array_push($replace_richtexteditor,$k);
+						$v['value'] = stripslashes($v['value']);
+					}
 					$newValues = renderSettingElement($v,$render);
 					$render->setPlaceholders($newValues,"view.");
 					$settingsElement = $render->render("settingsElement".$v['type'],$render->ph);
-					if($v['type'] == "richtext") { array_push($replace_richtexteditor,$k); }
 					$render->setPlaceholder("view.settingInput",$settingsElement);
 					$groupsItems .= $render->render("mainTabItemItem",$render->ph);
 					$settingsItems .= $render->render("mainTabSettingItem",$render->ph);
@@ -251,7 +253,7 @@ switch ($_REQUEST['h']) {
 				if(!isset($_POST[$key])) { $_POST[$key] = 0; }
 				if($origval != $_POST[$key]) {
 					$jsonval['value'] = json_decode($_POST[$key],true);
-					$jsonval['value'] = is_array($jsonval['value']) ? $jsonval['value'] : $_POST[$key];
+					$jsonval['value'] = is_array($jsonval['value']) ? $jsonval['value'] : addslashes($_POST[$key]);
 					$value = json_encode_wrapper($jsonval);
 					$result = $modx->db->update(Array("setting_value"=>$value), $table, $table.".`setting_name` = '".$key."'");
 				}
