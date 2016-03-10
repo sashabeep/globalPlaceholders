@@ -79,6 +79,9 @@ switch ($_REQUEST['h']) {
 				foreach($groupsSettings[$value['group']] as $k=>$v) {
 					if($v['type'] == "richtext") { 
 						array_push($replace_richtexteditor,$k);
+						$v['value'] = $modx->htmlspecialchars($v['value']);
+					}
+					if($v['type'] == "richtext" || $v['type'] == "textarea" || $v['type'] == "input") { 
 						$v['value'] = stripslashes($v['value']);
 					}
 					$newValues = renderSettingElement($v,$render);
@@ -254,7 +257,7 @@ switch ($_REQUEST['h']) {
 		}
 	break;
 	case "saveSettings":
-		$settings = $modx->config;
+		$settings = $modx->config;		
 		foreach($settings as $key=>$value) {
 			if(stristr($key, 'global_')) {
 				$jsonval = json_decode($value,true);
@@ -262,7 +265,13 @@ switch ($_REQUEST['h']) {
 				if(!isset($_POST[$key])) { $_POST[$key] = 0; }
 				if($origval != $_POST[$key]) {
 					$jsonval['value'] = json_decode($_POST[$key],true);
-					$jsonval['value'] = is_array($jsonval['value']) ? $jsonval['value'] : addslashes($_POST[$key]);
+					if($jsonval['type'] == "richtext") {
+						$jsonval['value'] = addslashes(stripslashes($_POST[$key]));
+						$jsonval['value'] = trim(str_replace(array("\n", "\r"), '', json_encode_wrapper($jsonval['value'])));
+						print_r($jsonval['value']);
+					} else {
+						$jsonval['value'] = is_array($jsonval['value']) ? $jsonval['value'] : $_POST[$key];
+					}
 					$value = json_encode_wrapper($jsonval);
 					$result = $modx->db->update(Array("setting_value"=>$value), $table, $table.".`setting_name` = '".$key."'");
 				}
