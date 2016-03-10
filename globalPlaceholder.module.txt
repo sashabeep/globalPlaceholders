@@ -4,13 +4,13 @@ $userrole = $modx->getUserInfo($modx->getLoginUserID())['role'];
 $modulename = "globalplaceholders";
 $globalPHPath = MODX_BASE_PATH.'assets/modules/'.$modulename.'/';
 $moduleurl = 'index.php?a=112&id='.$_GET['id'].'&';
+
 include_once($globalPHPath."includes/class.renderer.inc.php");
 $render = new Render($modx,$modulename);
 $render->templatesDir = $globalPHPath."templates";
 $render->setPlaceholders(Array('moduleurl' => $moduleurl, 'modulename' => $modulename, 'modulepath' => $globalPHPath, 'theme' => $modx->config['manager_theme'], 'modx_manager_url' => MODX_MANAGER_URL, 'pluginid' => $_REQUEST['id']));
 
-
-function renderSettingElement ($values) {
+function renderSettingElement ($values,$render) {
 	if($values['type'] == "text" || $values['type'] == "textarea") {
 		$values['value'] = is_array($values['value']) ? json_encode_wrapper($values['value']) : $values['value'];
 	}
@@ -29,7 +29,8 @@ function renderSettingElement ($values) {
 			$kkey = sizeof($svalspair) > 1 ? $svalspair[0] : $vv;
 			$vval = sizeof($svalspair) > 1 ? $svalspair[1] : $vv;
 			$selected = $values['value'] == $kkey ? "selected" : "";
-			$selectValues .= "<option value=".$kkey." ".$selected.">".$vval."</option>";
+			$render->setPlaceholders(array("optionValue"=>$kkey,"optionName"=>$vval,"optionSelected"=>$selected),"view.");
+			$selectValues .= $render->render("optionElement",$render->ph);
 		}
 		$values['selectValues'] = $selectValues;
 	}
@@ -53,6 +54,7 @@ switch ($_REQUEST['h']) {
 		$groupsSettings = Array();
 		$outGroups = "";
 		$outSettings = "";
+		$replace_richtexteditor = array();
 
 		foreach($settings as $key=>$value) {
 			if(stristr($key, 'global_')) {
@@ -63,6 +65,7 @@ switch ($_REQUEST['h']) {
 				$groupsSettings[$jsonval['group']][$key] = $jsonval;
 			}
 		}
+		sort($groups);
 		if(sizeof($globalSettings) == 0) {
 			$output = $render->render("mainpage",$render->ph);
 		} else {
@@ -70,9 +73,10 @@ switch ($_REQUEST['h']) {
 				$groupsItems = "";
 				$settingsItems = "";
 				foreach($groupsSettings[$value['group']] as $k=>$v) {
-					$newValues = renderSettingElement($v);
+					$newValues = renderSettingElement($v,$render);
 					$render->setPlaceholders($newValues,"view.");
 					$settingsElement = $render->render("settingsElement".$v['type'],$render->ph);
+					if($v['type'] == "richtext") { array_push($replace_richtexteditor,$k); }
 					$render->setPlaceholder("view.settingInput",$settingsElement);
 					$groupsItems .= $render->render("mainTabItemItem",$render->ph);
 					$settingsItems .= $render->render("mainTabSettingItem",$render->ph);
@@ -80,6 +84,18 @@ switch ($_REQUEST['h']) {
 				$outGroups .= $render->render("mainTabItemParent",Array('view.group'=>$value['group'],'view.groupName'=>$value['groupName'], 'view.groupItems'=>$groupsItems ));
 				$outSettings .= $render->render("mainTabSettingsParent",Array('view.group'=>$value['group'],'view.groupName'=>$value['groupName'], 'view.groupItems'=>$settingsItems ));
 			}
+			
+			if (is_array($replace_richtexteditor) && sizeof($replace_richtexteditor) > 0) {
+				// invoke OnRichTextEditorInit event
+				$evtOut = $modx->invokeEvent('OnRichTextEditorInit', array(
+					'editor' => $modx->getConfig("which_editor"),
+					'elements' => $replace_richtexteditor
+				));
+				if (is_array($evtOut)) {
+					$render->setPlaceholder("view.richtext",implode('', $evtOut));
+				}
+			}
+			
 			$tab = (is_numeric($_GET['tab'])) ? '<script type="text/javascript"> Us.setSelectedIndex( '.$_GET['tab'].' );</script>' : '';
 			$render->setPlaceholders(Array('tab' => $tab, 'tabGroups' => $outGroups, 'tabSettings' => $outSettings ));
 			$templatename = $userrole == 1 ? "mainpage" : "mainpageUser";
@@ -95,11 +111,13 @@ switch ($_REQUEST['h']) {
 			if(stristr($key, 'global_')) {
 				$jsonval = json_decode($value,true);
 				if(!$groups[$jsonval['group']]) {
-					$groupOut .= "<option value='".$jsonval['group']."'>".$jsonval['groupName']."</option>";
+					$render->setPlaceholders(array("optionValue"=>$jsonval['group'],"optionName"=>$jsonval['groupName']),"view.");
+					$groupOut .= $render->render("optionElement",$render->ph);
 					$groups[$jsonval['group']] = Array("group"=>$jsonval['group'],"groupName"=>$jsonval['groupName']);
 				}
 			}
 		}
+		sort($groups);
 		$render->setPlaceholder("view.groups",$groupOut);
 		$output = $render->render("addpage",$render->ph);
 		$output = $modx->mergeSettingsContent($output);
@@ -115,11 +133,13 @@ switch ($_REQUEST['h']) {
 				$jsonval = json_decode($value,true);
 				if(!$groups[$jsonval['group']]) {
 					$selected = $data['group'] == $jsonval['group'] ? "selected" : "";
-					$groupOut .= "<option value='".$jsonval['group']."' ".$selected.">".$jsonval['groupName']."</option>";
+					$render->setPlaceholders(array("optionValue"=>$jsonval['group'],"optionName"=>$jsonval['groupName'],"optionSelected"=>$selected),"view.");
+					$groupOut .= $render->render("optionElement",$render->ph);
 					$groups[$jsonval['group']] = Array("group"=>$jsonval['group'],"groupName"=>$jsonval['groupName']);
 				}
 			}
 		}
+		sort($groups);
 		$data['groups'] = $groupOut;
 		$data['setting_name'] = str_replace("global_", "", $settingName);
 		$data['selected'.$data['type']] = "selected";
@@ -130,8 +150,8 @@ switch ($_REQUEST['h']) {
 		$output = $modx->mergeSettingsContent($output);
 	break;
 	case "save":
-		if(empty($_POST['setting_name'])) { header('Location: '.$_SERVER['HTTP_REFERER']); break; }
 		$settings = $modx->config;
+		if(empty($_POST['setting_name'])) { header('Location: '.$_SERVER['HTTP_REFERER']); break; }
 		$old = json_decode($modx->getConfig($_POST['setting_oldname']),true);
 		$new = array();
 		$groups = Array();
@@ -160,7 +180,7 @@ switch ($_REQUEST['h']) {
 				"globalPH"=>$_POST['globalTV'],
 				"settingDescription"=>$_POST['settingDescription']
 			);
-			if(!empty($_POST['newgroup'])) {
+			if(!empty($_POST['newgroup']) && $_POST['newgroup'] != "") {
 				$new['setting_value']['group'] = $render->translateString($_POST['newgroup']);
 				$new['setting_value']['groupName'] = $_POST['newgroup'];
 			} else {
@@ -168,7 +188,6 @@ switch ($_REQUEST['h']) {
 				$new['setting_value']['groupName'] = $groups[$_POST['group']]['groupName'];
 			}
 			$new['setting_value'] = json_encode_wrapper($new['setting_value']);
-			print_r($new);
 			$result = $modx->db->insert($new,$table);
 			$modx->clearCache('full');
 			sleep(3);
@@ -177,6 +196,9 @@ switch ($_REQUEST['h']) {
 			$duplicate = json_decode($modx->getConfig("global_".$_POST['setting_name']),true);
 			if(is_array($duplicate) && $_POST['setting_oldname'] != "global_".$_POST['setting_name']) {
 				$_POST['setting_name'] = "duplicate_".$_POST['setting_name'];
+			}
+			if(!isset($old['values'])) {
+				$old['values'] = $_POST['values'];
 			}
 			foreach ($old as $key=>$value) {
 				if($_POST[$key] !== $value && isset($_POST[$key]) && $_POST[$key] != "") {
@@ -213,8 +235,6 @@ switch ($_REQUEST['h']) {
 	case "delete":
 		$settingName = $_REQUEST['settingid'];
 		$old = json_decode($modx->getConfig($settingName),true);
-		print_r($old);
-		echo $settingName;
 		$result = $modx->db->delete($table, "`setting_name` = '".$settingName."'");
 		if($result) {
 			$modx->clearCache('full');
@@ -234,14 +254,9 @@ switch ($_REQUEST['h']) {
 					$jsonval['value'] = is_array($jsonval['value']) ? $jsonval['value'] : $_POST[$key];
 					$value = json_encode_wrapper($jsonval);
 					$result = $modx->db->update(Array("setting_value"=>$value), $table, $table.".`setting_name` = '".$key."'");
-					$modx->config[$key] = $value;
-					if($result) {
-						echo $key." updated <br>";
-					}
 				}
 			}
 		}
-	
 		$modx->clearCache('full');
 		sleep(3);
 		header('Location: '.$moduleurl);
@@ -249,4 +264,5 @@ switch ($_REQUEST['h']) {
 }
 $render->setPlaceholder("view.content",$output);
 $output = $render->render("main",$render->ph);
+$output = $modx->mergeSettingsContent($output);
 echo $output;
