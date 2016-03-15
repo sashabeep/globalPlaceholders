@@ -1,4 +1,5 @@
 //<?php
+$useG = $useG ? $useG : false;
 $outputTabs = $outputTabs ? $outputTabs : false;
 $outputTabs = $outputTabs == "true" ? true : false;
 $output = "";		
@@ -204,8 +205,9 @@ switch ($_REQUEST['h']) {
 			$new['setting_value'] = json_encode_wrapper($new['setting_value']);
 			$result = $modx->db->insert($new,$table);
 			//add work without plugin
-			$result = $modx->db->insert(array('setting_name'=>str_replace("global_", "g_", $new['setting_name']) ),$table);
-
+			if ($useG) {
+				$result = $modx->db->insert(array('setting_name'=>str_replace("global_", "g_", $new['setting_name']) ),$table);
+			}
 			$modx->clearCache('full');
 			sleep(2);
 			header('Location: '.$moduleurl);
@@ -241,7 +243,9 @@ switch ($_REQUEST['h']) {
 				$updata['setting_name'] = "global_".$_POST['setting_name'];
 				$modx->db->query("UPDATE  ".$table." SET  `setting_name` =  'global_".$_POST['setting_name']."' WHERE  ".$table.".`setting_name` =  '".$_POST['setting_oldname']."'");
 				//add work without plugin
-				$modx->db->query("UPDATE  ".$table." SET  `setting_name` =  'g_".$_POST['setting_name']."' WHERE  ".$table.".`setting_name` =  '".str_replace("global_", "g_", $_POST['setting_oldname'])."'");
+				if ($useG) {
+					$modx->db->query("UPDATE  ".$table." SET  `setting_name` =  'g_".$_POST['setting_name']."' WHERE  ".$table.".`setting_name` =  '".str_replace("global_", "g_", $_POST['setting_oldname'])."'");
+				}
 			}
 			if($result) {
 				$modx->clearCache('full');
@@ -257,8 +261,9 @@ switch ($_REQUEST['h']) {
 		$old = json_decode($modx->getConfig($settingName),true);
 		$result = $modx->db->delete($table, "`setting_name` = '".$settingName."'");
 		//add work without plugin
-		$result = $modx->db->delete($table, "`setting_name` = '".str_replace("global_", "g_", $settingName)."'");
-		
+		if ($useG) {
+			$result = $modx->db->delete($table, "`setting_name` = '".str_replace("global_", "g_", $settingName)."'");
+		}
 		if($result) {
 			$modx->clearCache('full');
 			sleep(2);
@@ -284,7 +289,9 @@ switch ($_REQUEST['h']) {
 					$value = json_encode_wrapper($jsonval);
 					$result = $modx->db->update(Array("setting_value"=>$value), $table, $table.".`setting_name` = '".$key."'");
 					//add work without plugin
-					$result = $modx->db->update(Array("setting_value"=>$jsonval['value']), $table, $table.".`setting_name` = '".str_replace("global_", "g_", $key)."'");
+					if ($useG) {
+						$result = $modx->db->update(Array("setting_value"=>$jsonval['value']), $table, $table.".`setting_name` = '".str_replace("global_", "g_", $key)."'");
+					}
 				}
 			}
 		}
