@@ -265,10 +265,10 @@ switch ($_REQUEST['h']) {
 				if(!isset($_POST[$key])) { $_POST[$key] = 0; }
 				if($origval != $_POST[$key]) {
 					$jsonval['value'] = json_decode($_POST[$key],true);
-					if($jsonval['type'] == "richtext") {
+					if($jsonval['type'] == "richtext" || $jsonval['type'] == "textarea") {
 						$jsonval['value'] = addslashes(stripslashes($_POST[$key]));
 						$jsonval['value'] = trim(str_replace(array("\n", "\r"), '', json_encode_wrapper($jsonval['value'])));
-						print_r($jsonval['value']);
+						$jsonval['value'] = is_array(json_decode(stripslashes($jsonval['value']),true)) ? json_decode(stripslashes($jsonval['value']),true) : $jsonval['value'];
 					} else {
 						$jsonval['value'] = is_array($jsonval['value']) ? $jsonval['value'] : $_POST[$key];
 					}
