@@ -1,5 +1,6 @@
 //<?php
 $useG = $useG ? $useG : false;
+$useG = $useG == "true" ? true : false;
 $outputTabs = $outputTabs ? $outputTabs : false;
 $outputTabs = $outputTabs == "true" ? true : false;
 $output = "";		
@@ -51,6 +52,15 @@ function json_encode_wrapper ($array) {
 	}
 }
 
+function compareOrder ($a,$b) {
+	$a['setting_order'] = $a['setting_order'] ? $a['setting_order'] : 0;
+	$b['setting_order'] = $b['setting_order'] ? $b['setting_order'] : 0;
+	if ($a['setting_order'] == $b['setting_order']) {
+		return 0;
+	}
+	return ($a['setting_order'] < $b['setting_order']) ? -1 : 1;
+}
+
 switch ($_REQUEST['h']) {
 	default:
 		$settings = $modx->config;
@@ -79,9 +89,10 @@ switch ($_REQUEST['h']) {
 			foreach ($groups as $key=>$value) {
 				$groupsItems = "";
 				$settingsItems = "";
+				usort($groupsSettings[$value['group']],"compareOrder");
 				foreach($groupsSettings[$value['group']] as $k=>$v) {
 					if($v['type'] == "richtext") { 
-						array_push($replace_richtexteditor,$k);
+						array_push($replace_richtexteditor,"global_".$v['settingName']);
 						$v['value'] = $modx->htmlspecialchars($v['value']);
 					}
 					if($v['type'] == "richtext" || $v['type'] == "textarea" || $v['type'] == "input") { 
@@ -194,7 +205,8 @@ switch ($_REQUEST['h']) {
 				"values"=>$_POST['values'],
 				"globalTV"=>$_POST['globalTV'],
 				"globalPH"=>$_POST['globalTV'],
-				"settingDescription"=>$_POST['settingDescription']
+				"settingDescription"=>$_POST['settingDescription'],
+				"setting_order"=>$_POST['setting_order']
 			);
 			if(!empty($_POST['newgroup']) && $_POST['newgroup'] != "") {
 				$new['setting_value']['group'] = $render->translateString($_POST['newgroup']);
@@ -233,6 +245,7 @@ switch ($_REQUEST['h']) {
 				$old['group'] = $groups[$_POST['group']]['group'];
 				$old['groupName'] = $groups[$_POST['group']]['groupName'];
 			}
+			$old['setting_order'] = $_POST['setting_order'];
 			$old['globalTV'] = $_POST['globalTV'];
 			$old['globalPH'] = $_POST['globalPH'];
 			$old = json_encode_wrapper($old);
