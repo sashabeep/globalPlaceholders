@@ -96,17 +96,6 @@
 			</div>
 			<div class="row" style="margin-bottom: 15px;">
 				<div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
-					<span class="warning">Использовать без плагина</span><br><span class="comment">Если да то будет создана новая настройка с префиксом "g_". Будет доступно в <span>[</span>()]</span>
-				</div>
-				<div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
-					<label class="checkbox">
-						<input type="checkbox" name="globalUse" onchange="documentDirty=true;" value="1" />
-						<i></i>
-					</label>
-				</div>
-			</div>
-			<div class="row" style="margin-bottom: 15px;">
-				<div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
 					<span class="warning">Существующие категории</span><br><span class="comment">выберите существующую категорию</span>
 				</div>
 				<div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
