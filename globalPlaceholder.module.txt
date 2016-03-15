@@ -73,6 +73,7 @@ switch ($_REQUEST['h']) {
 		} else {
 			$outSettingsTemplate = $outputTabs === true ? "mainTabTabSettingsParent" : "mainTabSettingsParent";
 			$settingsItemsTemplate = $outputTabs === true ? "mainTabTabSettingItem" : "mainTabSettingItem";
+			$settingsItemsTemplate = $userrole == 1 ? $settingsItemsTemplate : $settingsItemsTemplate."User";
 			foreach ($groups as $key=>$value) {
 				$groupsItems = "";
 				$settingsItems = "";
