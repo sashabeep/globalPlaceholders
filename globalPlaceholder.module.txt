@@ -1,3 +1,4 @@
+//<?php
 $outputTabs = $outputTabs ? $outputTabs : false;
 $outputTabs = $outputTabs == "true" ? true : false;
 $output = "";		
@@ -202,8 +203,11 @@ switch ($_REQUEST['h']) {
 			}
 			$new['setting_value'] = json_encode_wrapper($new['setting_value']);
 			$result = $modx->db->insert($new,$table);
+			//add work without plugin
+			$result = $modx->db->insert(array('setting_name'=>str_replace("global_", "g_", $new['setting_name']) ),$table);
+
 			$modx->clearCache('full');
-			sleep(3);
+			sleep(2);
 			header('Location: '.$moduleurl);
 		} else {
 			$duplicate = json_decode($modx->getConfig("global_".$_POST['setting_name']),true);
@@ -236,10 +240,12 @@ switch ($_REQUEST['h']) {
 				$updata = array();
 				$updata['setting_name'] = "global_".$_POST['setting_name'];
 				$modx->db->query("UPDATE  ".$table." SET  `setting_name` =  'global_".$_POST['setting_name']."' WHERE  ".$table.".`setting_name` =  '".$_POST['setting_oldname']."'");
+				//add work without plugin
+				$modx->db->query("UPDATE  ".$table." SET  `setting_name` =  'g_".$_POST['setting_name']."' WHERE  ".$table.".`setting_name` =  '".str_replace("global_", "g_", $_POST['setting_oldname'])."'");
 			}
 			if($result) {
 				$modx->clearCache('full');
-				sleep(3);
+				sleep(2);
 				header('Location: '.$moduleurl);
 			} else {
 				echo "shit";
@@ -252,7 +258,7 @@ switch ($_REQUEST['h']) {
 		$result = $modx->db->delete($table, "`setting_name` = '".$settingName."'");
 		if($result) {
 			$modx->clearCache('full');
-			sleep(3);
+			sleep(2);
 			header('Location: '.$moduleurl);
 		}
 	break;
@@ -274,11 +280,14 @@ switch ($_REQUEST['h']) {
 					}
 					$value = json_encode_wrapper($jsonval);
 					$result = $modx->db->update(Array("setting_value"=>$value), $table, $table.".`setting_name` = '".$key."'");
+					//add work without plugin
+					$result = $modx->db->update(Array("setting_value"=>$jsonval['value']), $table, $table.".`setting_name` = '".str_replace("global_", "g_", $key)."'");
 				}
 			}
 		}
+			
 		$modx->clearCache('full');
-		sleep(3);
+		sleep(2);
 		header('Location: '.$moduleurl);
 	break;
 }
