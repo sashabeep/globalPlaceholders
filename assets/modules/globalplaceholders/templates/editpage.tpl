@@ -98,6 +98,17 @@
 			</div>
 			<div class="row" style="margin-bottom: 15px;">
 				<div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
+					<span class="warning">Редактировать на фронтэнде</span><br><span class="comment">Если да то значение будет доступно к редактированию на сайте при условии что у вас установлен плагин gPH Front Editor</span>
+				</div>
+				<div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
+					<label class="checkbox">
+						<input type="checkbox" name="frontEditor" onchange="documentDirty=true;" value="1" [+view.frontEditorchecked+]/>
+						<i></i>
+					</label>
+				</div>
+			</div>
+			<div class="row" style="margin-bottom: 15px;">
+				<div class="col-ss-12 col-xs-4 col-sm-3 col-md-2 col-lg-2">
 					<span class="warning">Существующие категории</span><br><span class="comment">Описание первого тестового параметра</span>
 				</div>
 				<div class="col-ss-12 col-xs-8 col-sm-9 col-md-10 col-lg-10">
