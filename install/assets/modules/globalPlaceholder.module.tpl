@@ -2,7 +2,7 @@
 /**
  * globalPlaсeholders
  * 
- * модуль пользоватьских настроек для сайта
+ * project global settings module
  * 
  * @category	module
  * @version 	0.1
