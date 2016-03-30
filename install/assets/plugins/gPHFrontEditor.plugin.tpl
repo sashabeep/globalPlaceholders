@@ -12,7 +12,7 @@
  * @internal	@events OnWebPagePrerender,OnWebPageInit
  * @internal    @installset base
  * @internal    @legacy_names gPHFrontEditor
- * @internal    @disabled 0
+ * @internal    @disabled 1
  */
 
 $useG = $modx->getConfig("gph_useG");
@@ -22,41 +22,40 @@ $fronteditor = $modx->getConfig("gph_fronteditor");
 $globalprefix = $modx->getConfig("gph_globalprefix");
 $action = $_REQUEST['gphfe'] ? $_REQUEST['gphfe'] : "default";
 $e = &$modx->Event;
-if($fronteditor == "1") {
-	$gphfe = new gPHfe($modx);
-	$gphfe->modx = &$modx;
-	$gphfe->useG = $useG;
-	$gphfe->table = $modx->getFullTableName("system_settings");
-	$gphfe->fronteditor = $fronteditor;
-	$gphfe->globalprefix = $globalprefix;
 
-	switch ($e->name) {
-		case "OnWebPagePrerender":
-			if($action == "savePH") {
-				if(isset($_SESSION['mgrValidated']) && $_SESSION['mgrValidated'] == 1) {
-					$o = &$modx->documentOutput;
-					$data = array();
-					$data['name'] = $modx->db->escape($_REQUEST['name']);
-					$data['value'] = $modx->db->escape($_REQUEST['value']);
-					$data['setting'] = $modx->getConfig($data['name']);
-					$o = $gphfe->saveSetting($data);
-				}
+$gphfe = new gPHfe($modx);
+$gphfe->modx = &$modx;
+$gphfe->useG = $useG;
+$gphfe->table = $modx->getFullTableName("system_settings");
+$gphfe->fronteditor = $fronteditor;
+$gphfe->globalprefix = $globalprefix;
+
+switch ($e->name) {
+	case "OnWebPagePrerender":
+		if($action == "savePH") {
+			if(isset($_SESSION['mgrValidated']) && $_SESSION['mgrValidated'] == 1 && $fronteditor == "1") {
+				$o = &$modx->documentOutput;
+				$data = array();
+				$data['name'] = $modx->db->escape($_REQUEST['name']);
+				$data['value'] = $modx->db->escape($_REQUEST['value']);
+				$data['setting'] = $modx->getConfig($data['name']);
+				$o = $gphfe->saveSetting($data);
 			}
-			return;
-		break;
-		case "OnWebPageInit":
-			if($action == "default") {
-				if(isset($_SESSION['mgrValidated']) && $_SESSION['mgrValidated'] == 1) {
-					$gphfe->insertScripts();
-					$gphfe->insertImageEditor();
-				}
+		}
+		return;
+	break;
+	case "OnWebPageInit":
+		if($action == "default") {
+			if(isset($_SESSION['mgrValidated']) && $_SESSION['mgrValidated'] == 1 && $fronteditor == "1") {
+				$gphfe->insertScripts();
+				$gphfe->insertImageEditor();
 			}
-			return;
-		break;
-		default:
-			return;
-		break;
-	}
+		}
+		return;
+	break;
+	default:
+		return;
+	break;
 }
 
 class gPHfe {
