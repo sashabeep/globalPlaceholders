@@ -13,6 +13,7 @@
  * @internal    @installset base
  * @internal    @legacy_names gPHParser
  * @internal    @disabled 1
+ * @internal	@modx_category globalPlaseholders
  */
 
 $e = $modx->Event;
