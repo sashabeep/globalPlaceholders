@@ -1,6 +1,6 @@
 // <?php 
 /**
- * globalPlaseholders
+ * globalPlaсeholders
  * 
  * модуль пользоватьских настроек для сайта
  * 
@@ -11,7 +11,7 @@
  * @internal	@properties	 
  * @internal	@guid 4b4a6e4c16ee4fdfb4e7a41c25662f48
  * @internal	@shareparams 1
- * @internal	@modx_category globalPlaseholders
+ * @internal	@modx_category globalPlaсeholders
  */
 
 $useG = $modx->getConfig("gph_useG");

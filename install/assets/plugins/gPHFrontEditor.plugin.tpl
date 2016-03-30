@@ -13,7 +13,7 @@
  * @internal    @installset base
  * @internal    @legacy_names gPHFrontEditor
  * @internal    @disabled 1
- * @internal	@modx_category globalPlaseholders
+ * @internal	@modx_category globalPlaсeholders
  */
 
 $useG = $modx->getConfig("gph_useG");
