@@ -9,7 +9,7 @@
  * @license 	http://www.gnu.org/copyleft/gpl.html GNU Public License (GPL)
  * @author      WorkForFood
  * @internal	@properties 
- * @internal	@events OnWebPagePrerender,OnWebPageInit
+ * @internal	@events OnWebPagePrerender,OnWebPageInit,OnWebPageComplete
  * @internal    @installset base
  * @internal    @legacy_names gPHFrontEditor
  * @internal    @disabled 1
@@ -21,8 +21,8 @@ $outputTabs = $modx->getConfig("gph_outputTabs");
 $fronteditor = $modx->getConfig("gph_fronteditor");
 $globalprefix = $modx->getConfig("gph_globalprefix");
 $action = $_REQUEST['gphfe'] ? $_REQUEST['gphfe'] : "default";
-$e = &$modx->Event;
-
+$validated = isset($_SESSION['mgrValidated']) && $_SESSION['mgrValidated'] == 1 ? $_SESSION['mgrValidated'] : 0;
+$e = $modx->Event;
 $gphfe = new gPHfe($modx);
 $gphfe->modx = &$modx;
 $gphfe->useG = $useG;
@@ -32,24 +32,26 @@ $gphfe->globalprefix = $globalprefix;
 
 switch ($e->name) {
 	case "OnWebPagePrerender":
-		if($action == "savePH") {
-			if(isset($_SESSION['mgrValidated']) && $_SESSION['mgrValidated'] == 1 && $fronteditor == "1") {
-				$o = &$modx->documentOutput;
-				$data = array();
-				$data['name'] = $modx->db->escape($_REQUEST['name']);
-				$data['value'] = $modx->db->escape($_REQUEST['value']);
-				$data['setting'] = $modx->getConfig($data['name']);
-				$o = $gphfe->saveSetting($data);
-			}
+		if($action == "savePH" && $validated == 1 && $fronteditor == 1) {
+			$o = &$modx->documentOutput;
+			$data = array();
+			$data['name'] = $modx->db->escape($_REQUEST['name']);
+			$data['value'] = $modx->db->escape($_REQUEST['value']);
+			$data['setting'] = $modx->getConfig($data['name']);
+			$o = $gphfe->saveSetting($data);
 		}
 		return;
 	break;
 	case "OnWebPageInit":
-		if($action == "default") {
-			if(isset($_SESSION['mgrValidated']) && $_SESSION['mgrValidated'] == 1 && $fronteditor == "1") {
-				$gphfe->insertScripts();
-				$gphfe->insertImageEditor();
-			}
+		if($action == "default" && $validated == 1 && $fronteditor == 1) {
+			$gphfe->insertScripts();
+			$gphfe->insertImageEditor();
+		}
+		return;
+	break;
+	case "OnWebPageComplete":
+		if($validated == 1 && $fronteditor == 1) {
+			$modx->clearCache();
 		}
 		return;
 	break;
@@ -57,6 +59,7 @@ switch ($e->name) {
 		return;
 	break;
 }
+
 
 class gPHfe {
 	public $modx = null;
