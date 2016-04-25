@@ -393,10 +393,11 @@ switch ($_REQUEST['h']) {
 					$result = $modx->db->update(Array("setting_value"=>$value), $table, $table.".`setting_name` = '".$key."'");
 					//add work without plugin
 					if ($useG == "1") {
-						if($modx->getConfig(str_replace("global_", $globalprefix, $key))) {
+						$isset = $modx->db->getValue( $modx->db->select( 'count(*)', $table, "setting_name=".str_replace("global_", $globalprefix, $key)." ") );
+						if($isset){
 							$result = $modx->db->update(Array("setting_value"=>$jsonval['value']), $table, $table.".`setting_name` = '".str_replace("global_", $globalprefix, $key)."'");
 						} else {
-							$result = $modx->db->insert(array('setting_name'=>str_replace("global_", $globalprefix, $key), "setting_value"=>$jsonval['value'] ),$table);
+							$result = $modx->db->insert(array('setting_name'=>str_replace("global_", $globalprefix, $key), "setting_value"=>$jsonval['value'] ),$table);   
 						}
 					}
 				}
